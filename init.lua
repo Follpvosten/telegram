@@ -181,6 +181,43 @@ if chat_id then
                 telegram.send_message(chat_id, name .. " left the game.")
             end
         end)
+
+        minetest.register_on_dieplayer(function(player, reason)
+            local name = player:get_player_name()
+            local dtype = reason.type
+            local reason_str
+            if dtype == "punch" then
+                if reason.object then
+                    local other_name = reason.object:get_player_name()
+                    if other_name == "" then
+                        -- not a player
+                        reason_str = " was slain by an enemy"
+                    else
+                        reason_str = " was slain by " .. other_name
+                    end
+                else
+                    -- ???
+                    reason_str = " was slain"
+                end
+            elseif dtype == "fall" then
+                reason_str = " fell to their death"
+            elseif dtype == "node_damage" then
+                -- this is probably due to lava or radiation
+                reason_str = " tried to swim in lava or something"
+            elseif dtype == "drown" then
+                reason_str = " drowned"
+            else -- this will never be "respawn" here
+                reason_str = " died"
+            end
+            telegram.send_message(chat_id, name .. reason_str)
+        end)
+
+        minetest.register_on_shutdown(function()
+            telegram.send_message(chat_id, "server is shutting down")
+        end)
+
+        -- Send a message at initialization time
+        telegram.send_message(chat_id, "server is starting up")
     end
 end
 
